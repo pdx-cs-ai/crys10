@@ -62,20 +62,16 @@ fn main() {
                     }
                     let nletters = letters.union(&w3.letters).count();
                     if nletters <= nop {
-                        ntrips
-                            .fetch_update(OSC, OSC, |ntrips| {
-                                if ntrips % 1000000 == 0 {
-                                    println!(
-                                        "{} {} {} {}",
-                                        ntrips,
-                                        w1.word,
-                                        w2.word,
-                                        w3.word
-                                    );
-                                }
-                                Some(ntrips + 1)
-                            })
-                            .unwrap();
+                        let old_ntrips = ntrips.fetch_add(1, OSC);
+                        if old_ntrips % 1000000 == 0 {
+                            println!(
+                                "{} {} {} {}",
+                                old_ntrips,
+                                w1.word,
+                                w2.word,
+                                w3.word
+                            );
+                        }
                     }
                 }
             }
