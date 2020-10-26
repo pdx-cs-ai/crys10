@@ -1,4 +1,4 @@
-use std::{collections, fs, io, sync::atomic};
+use std::{collections, env, fs, io, sync::atomic};
 
 use atomic::AtomicUsize;
 use atomic::Ordering::SeqCst as OSC;
@@ -34,24 +34,26 @@ where
 }
 
 fn main() {
+    let nop: usize = env::args().nth(1).unwrap().parse().unwrap();
+
     let dict = io::BufReader::new(
         fs::File::open("/usr/local/share/dict/freq.txt").unwrap(),
     );
-    let words = collect_words(dict, 10..=11);
+    let words = collect_words(dict, nop..=nop+1);
 
     let ntrips = AtomicUsize::new(0);
     words
         .par_iter()
         .enumerate()
-        .filter(|(_, w)| w.len == 10)
+        .filter(|(_, w)| w.len == nop)
         .for_each(|(i, w1)| {
             for (j, w2) in words[i + 1..].iter().enumerate() {
-                if w2.len != 10 {
+                if w2.len != nop {
                     continue;
                 }
                 let letters: Set<char> =
                     w1.letters.union(&w2.letters).cloned().collect();
-                if letters.len() > 10 {
+                if letters.len() > nop {
                     continue;
                 }
                 for (k, w3) in words.iter().enumerate() {
@@ -59,7 +61,7 @@ fn main() {
                         continue;
                     }
                     let nletters = letters.union(&w3.letters).count();
-                    if nletters <= 10 {
+                    if nletters <= nop {
                         ntrips
                             .fetch_update(OSC, OSC, |ntrips| {
                                 if ntrips % 1000000 == 0 {
