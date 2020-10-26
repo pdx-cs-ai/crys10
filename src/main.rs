@@ -1,6 +1,7 @@
-use std::{fs, io, collections};
-use io::BufRead;
+use std::{collections, fs, io};
+
 use collections::HashSet as Set;
+use io::BufRead;
 
 struct Word {
     #[allow(unused)]
@@ -9,12 +10,15 @@ struct Word {
     len: usize,
 }
 
-fn collect_words<T>(dict: io::BufReader<T>, ns: impl Iterator<Item=usize>) -> Vec<Word>
-    where T: io::Read
+fn collect_words<T>(
+    dict: io::BufReader<T>,
+    ns: impl Iterator<Item = usize>,
+) -> Vec<Word>
+where
+    T: io::Read,
 {
     let sizes: Set<usize> = ns.collect();
-    dict
-        .lines()
+    dict.lines()
         .map(|line| line.unwrap())
         .filter(|word| sizes.contains(&word.len()))
         .map(|word| {
@@ -36,7 +40,7 @@ fn main() {
         if w1.len != 10 {
             continue;
         }
-        for (j, w2) in words[i+1..].iter().enumerate() {
+        for (j, w2) in words[i + 1..].iter().enumerate() {
             if w2.len != 10 {
                 continue;
             }
@@ -55,10 +59,7 @@ fn main() {
                     if ntrips % 1000000 == 0 {
                         println!(
                             "{} {} {} {}",
-                            ntrips,
-                            w1.word,
-                            w2.word,
-                            w3.word
+                            ntrips, w1.word, w2.word, w3.word
                         );
                     }
                 }
