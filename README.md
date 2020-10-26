@@ -5,7 +5,8 @@ Bart Massey
 yet.*
 
 This program attempts to find legal cryptarithms of a given
-length *n*. Assumptions are that:
+length *n*. (The name comes from the fact that initially *n*
+was fixed at *10*.) Assumptions are that:
 
 * Both operands of the addition are of length *n*.
 
