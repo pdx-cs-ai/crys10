@@ -57,7 +57,7 @@ fn main() {
                     continue;
                 }
                 for (k, w3) in words.iter().enumerate() {
-                    if i == k || j == k {
+                    if i == k || j + i + 1 == k {
                         continue;
                     }
                     let nletters = letters.union(&w3.letters).count();
