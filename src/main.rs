@@ -1,7 +1,11 @@
-use std::{collections, fs, io};
+use std::{collections, fs, io, sync::atomic};
 
+use atomic::AtomicUsize;
+use atomic::Ordering::SeqCst as OSC;
 use collections::HashSet as Set;
 use io::BufRead;
+
+use rayon::prelude::*;
 
 struct Word {
     #[allow(unused)]
@@ -35,37 +39,45 @@ fn main() {
     );
     let words = collect_words(dict, 10..=11);
 
-    let mut ntrips = 0;
-    for (i, w1) in words.iter().enumerate() {
-        if w1.len != 10 {
-            continue;
-        }
-        for (j, w2) in words[i + 1..].iter().enumerate() {
-            if w2.len != 10 {
-                continue;
-            }
-            let letters: Set<char> =
-                w1.letters.union(&w2.letters).cloned().collect();
-            if letters.len() > 10 {
-                continue;
-            }
-            for (k, w3) in words.iter().enumerate() {
-                if i == k || j == k {
+    let ntrips = AtomicUsize::new(0);
+    words
+        .par_iter()
+        .enumerate()
+        .filter(|(_, w)| w.len == 10)
+        .for_each(|(i, w1)| {
+            for (j, w2) in words[i + 1..].iter().enumerate() {
+                if w2.len != 10 {
                     continue;
                 }
-                let nletters = letters.union(&w3.letters).count();
-                if nletters <= 10 {
-                    ntrips += 1;
-                    if ntrips % 1000000 == 0 {
-                        println!(
-                            "{} {} {} {}",
-                            ntrips, w1.word, w2.word, w3.word
-                        );
+                let letters: Set<char> =
+                    w1.letters.union(&w2.letters).cloned().collect();
+                if letters.len() > 10 {
+                    continue;
+                }
+                for (k, w3) in words.iter().enumerate() {
+                    if i == k || j == k {
+                        continue;
+                    }
+                    let nletters = letters.union(&w3.letters).count();
+                    if nletters <= 10 {
+                        ntrips
+                            .fetch_update(OSC, OSC, |ntrips| {
+                                if ntrips % 1000000 == 0 {
+                                    println!(
+                                        "{} {} {} {}",
+                                        ntrips,
+                                        w1.word,
+                                        w2.word,
+                                        w3.word
+                                    );
+                                }
+                                Some(ntrips + 1)
+                            })
+                            .unwrap();
                     }
                 }
             }
-        }
-    }
+        });
 
-    println!("{}", ntrips);
+    println!("{}", ntrips.load(OSC));
 }
